@@ -118,8 +118,8 @@ fn check_health(
 
     let still_being_liquidated = account.being_liquidated && health_cache.get_health(group, HealthType::Init) < 0;
 
-    let threshold = 1.0 + config.early_candidate_percentage / 100.0;
-    let candidate = health_fraction < threshold || still_being_liquidated;
+    let equity = assets - liabilities;
+    let candidate = (health_fraction < config.health_threshold || still_being_liquidated) && equity >= config.quote_equity_threshold;
 
     Ok(Health {
         candidate,

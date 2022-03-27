@@ -14,8 +14,6 @@ use {
     solana_sdk::account::{AccountSharedData, ReadableAccount},
     solana_sdk::pubkey::Pubkey,
     std::collections::HashSet,
-    std::fs::File,
-    std::io::Read,
     std::str::FromStr,
 };
 
@@ -42,7 +40,8 @@ pub struct Config {
     pub serum_program_id: String,
     pub snapshot_interval_secs: u64,
     pub websocket_server_bind_address: String,
-    pub early_candidate_percentage: f64,
+    pub health_threshold: f64,
+    pub quote_equity_threshold: u64,
 }
 
 pub fn encode_address(addr: &Pubkey) -> String {
@@ -85,16 +84,24 @@ fn is_mango_cache<'a>(account: &'a AccountSharedData, program_id: &Pubkey) -> bo
 async fn main() -> anyhow::Result<()> {
     let args: Vec<String> = std::env::args().collect();
     if args.len() < 2 {
-        println!("requires a config file argument");
+        println!("requires config arguments");
         return Ok(());
     }
 
-    let config: Config = {
-        let mut file = File::open(&args[1])?;
-        let mut contents = String::new();
-        file.read_to_string(&mut contents)?;
-        toml::from_str(&contents).unwrap()
+    let config = Config {
+        rpc_ws_url: args[1].clone(),
+        rpc_http_url: args[2].clone(),
+        mango_program_id: args[3].clone(),
+        mango_group_id: args[4].clone(),
+        mango_cache_id: args[5].clone(),
+        mango_signer_id: args[6].clone(),
+        serum_program_id: args[7].clone(),
+        snapshot_interval_secs: args[8].parse::<u64>().unwrap(),
+        websocket_server_bind_address: args[9].clone(),
+        health_threshold: args[10].parse::<f64>().unwrap(),
+        quote_equity_threshold: args[11].parse::<u64>().unwrap(),
     };
+    
 
     let mango_program_id = Pubkey::from_str(&config.mango_program_id)?;
     let mango_group_id = Pubkey::from_str(&config.mango_group_id)?;
